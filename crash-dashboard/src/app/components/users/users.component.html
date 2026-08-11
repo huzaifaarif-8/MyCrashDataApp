@@ -1,0 +1,85 @@
+<header class="header">
+  <span class="header-icon">&#9992;</span>
+  <div>
+    <div class="header-title">CrashData</div>
+    <div class="header-sub">User Management</div>
+  </div>
+  <a class="nav-link" routerLink="/">Dashboard</a>
+  <button class="logout-btn" (click)="logout()">Logout</button>
+</header>
+
+<main class="main">
+
+  <div class="section-label">Add New User</div>
+  <div class="card form-card">
+    <form class="add-form" (ngSubmit)="addUser()">
+      <div class="field">
+        <label for="newUsername">Username</label>
+        <input
+          id="newUsername"
+          type="text"
+          [(ngModel)]="newUsername"
+          name="newUsername"
+          placeholder="e.g. john"
+          [disabled]="submitting"
+        />
+      </div>
+      <div class="field">
+        <label for="newPassword">Password</label>
+        <input
+          id="newPassword"
+          type="password"
+          [(ngModel)]="newPassword"
+          name="newPassword"
+          placeholder="••••••••"
+          [disabled]="submitting"
+        />
+      </div>
+      <button
+        type="submit"
+        class="add-btn"
+        [disabled]="submitting || !newUsername.trim() || !newPassword.trim()"
+      >
+        @if (submitting) { <span class="btn-spinner"></span> Adding… } @else { Add User }
+      </button>
+    </form>
+
+    @if (formError) {
+      <div class="msg msg-error">{{ formError }}</div>
+    }
+    @if (formSuccess) {
+      <div class="msg msg-success">{{ formSuccess }}</div>
+    }
+  </div>
+
+  <div class="section-label">Existing Users</div>
+  <div class="card">
+    @if (users.length === 0) {
+      <p class="empty">No users found.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr><th>#</th><th>Username</th><th></th></tr>
+        </thead>
+        <tbody>
+          @for (u of users; track u.id; let i = $index) {
+            <tr>
+              <td><span class="rank">{{ i + 1 }}</span></td>
+              <td>{{ u.username }}</td>
+              <td class="actions">
+                <button
+                  class="delete-btn"
+                  (click)="deleteUser(u)"
+                  [disabled]="deletingId === u.id"
+                >
+                  {{ deletingId === u.id ? 'Deleting…' : 'Delete' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</main>

@@ -65,6 +65,9 @@ try
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<IAuthService, AuthService>();
 
+    builder.Services.AddSingleton<DapperContext>();
+    builder.Services.AddScoped<AnalyticsRepository>();
+
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
@@ -115,6 +118,26 @@ try
             context.SaveChanges();
             Log.Information("Default admin user {Username} created", username);
         }
+
+        var analytics = scope.ServiceProvider.GetRequiredService<AnalyticsRepository>();
+        await analytics.InitializeSchemaAsync();
+
+        var operatorStats = context.Crashes
+            .Where(c => c.Operator != null)
+            .GroupBy(c => c.Operator!)
+            .Select(g => new OperatorStat
+            {
+                OperatorName = g.Key,
+                TotalCrashes = g.Count(),
+                TotalFatalities = g.Sum(c => c.Fatalities ?? 0),
+                TotalAboard = g.Sum(c => c.Aboard ?? 0),
+                FirstCrashYear = g.Min(c => c.Year),
+                LastCrashYear = g.Max(c => c.Year)
+            })
+            .ToList();
+
+        await analytics.UpsertOperatorStatsAsync(operatorStats);
+        Log.Information("Analytics DB seeded with {Count} operator records via Dapper", operatorStats.Count);
     }
 
     app.UseRouting();
